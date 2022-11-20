@@ -1,19 +1,22 @@
 {
-  "name": "shinden_scraper",
+  "name": "shnd_scraper",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "bin": "index.js",
+  "pkg": {
+    "assets": "node_modules/puppeteer-extra-plugin-stealth/**/*.*"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "cloudscraper": "^4.6.0",
-    "cloudscraper-version.two": "^0.0.15",
+    "mysql": "^2.18.1",
+    "package": "^1.0.1",
     "puppeteer": "^19.2.2",
     "puppeteer-extra": "^3.3.4",
-    "puppeteer-extra-plugin-stealth": "^2.11.1",
-    "request": "^2.88.2"
+    "puppeteer-extra-plugin-stealth": "^2.11.1"
   }
 }
