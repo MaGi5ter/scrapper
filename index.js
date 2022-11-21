@@ -2,32 +2,24 @@ const puppeteer = require('puppeteer-extra')
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 puppeteer.use(StealthPlugin())
 
+const fs = require('fs')
+let generateString
+
 const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36 OPR/91.0.4516.106"
 const hosting = ['Mega','Gdrive','Cda','Vk','Sibnet']
 const required_res = 720
 
-let browser_limit = 1    //how many browsers can be opened at once, on weakest PC should maximum 5
+let browser_limit = 8    //how many tasks can be done at once, on weakest PC should be maximum 5
 let open_browser = 0
-let queue = 0
 
 const myArgs = process.argv.slice(2);
 
-// if(myArgs.length < 1) {
-//     console.log('no args')
-//     return
-// }
+let queueCount = 0
+let queue = []
+let queueId = 0
+const acceptedPlayers = []
 
-// getLinks()
-
-// async function getLinks() {
-//     let auth = await getAuth()
-//     let browser = await getBrowser()
-//     let page = await getSecuredPage(browser)
-    
-// }
-
-//code id not readable for not me.. sry..
-//will be fixed in near future
+////////////////////////////////////////////////////////////////////////////////////
 
 getPlayersData(myArgs[0])
 
@@ -37,7 +29,7 @@ async function getPlayersData(link) {
     for (let index = 0; index < episodeIDs.length; index++) {
         let link = getLinkFromID(episodeIDs[index])
         dataToPlayers(link)
-        await sleep(2000)
+        sleep(35) //it was way too fast
     }
 }
 
@@ -63,7 +55,7 @@ async function filter_players(player_data) {
         }
         else console.log('removed ',player_data[index])
 
-        sleep(150)
+        sleep(500)
     }
 }
 
@@ -71,28 +63,22 @@ async function final(playerdata) {
 
     console.log(playerdata)
 
-    await checkBrowsers()
-    let browser = await getBrowser()
-    let page = await getSecuredPage(browser)
-
-    let auth = await getAuth()
+    let pageBrowser = await getPage()
+    let auth = await getAuth(pageBrowser[1])
     let player = playerdata[2]
 
-    let finalPlayerdata = await getData(player,auth,page)
-    open_browser--
+    let finalPlayerdata = await getData(player,auth,pageBrowser[1])
+    closeBrowser(pageBrowser[0])
 
     console.log(finalPlayerdata)
 }
 
 async function getPlayerData(link) {
-    await checkBrowsers()
-    let browser = await getBrowser()
-    let page = await getSecuredPage(browser)
+    let pageBrowser = await getPage() ; let page = pageBrowser[1]
     await page.goto(link,{waitUntil: 'networkidle0'})
 
     let list = await page.evaluate(() => document.querySelector('.table-responsive').innerHTML)
-    open_browser--
-    browser.close()
+    await closeBrowser(pageBrowser[0])
 
     list = list.split('\n')  
 
@@ -124,9 +110,7 @@ function getLinkFromID(idArr) {
 }
 
 async function getEachEpisodeID(link) {               //return id to every single episode of link that put 
-    await checkBrowsers()
-    let browser = await getBrowser()
-    let page = await getSecuredPage(browser)
+    let pageBrowser = await getPage() ; let page = pageBrowser[1]
 
     await page.goto(link,{waitUntil: 'networkidle0'})
 
@@ -158,8 +142,7 @@ async function getEachEpisodeID(link) {               //return id to every singl
     }
 
     console.log(data)
-    open_browser--
-    browser.close()
+    await closeBrowser(pageBrowser[0])
     return data
     
 }
@@ -190,17 +173,46 @@ async function getData(video,newAuth,page) {      //this will return link to pla
     }  
 }
 
-async function getAuth() {                     //return auth code
-    await checkBrowsers()
-    let browser = await getBrowser()
-    let page = await getSecuredPage(browser)
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+async function getAuth(page) {                     //return auth code
     const newAuth = await page.evaluate(() => { 
         return _Storage.basic
     })
-    await browser.close()
-    open_browser--
     console.log("auth code: ",newAuth)
     return newAuth 
+}
+
+async function getPage() {                     //returns new browser and page, also add to queue
+    await checkBrowsers()          /// here problem
+    let browser = await getBrowser()
+    let page = await getSecuredPage(browser)
+    return [browser,page]
+}
+
+async function closeBrowser(browser) {
+    await browser.close()
+    open_browser--
+    console.log('current open browser: ',open_browser)
+    return true
+}
+
+async function checkBrowsers() {   //check if new browser can be opened, basiclly its queue
+    let id = queueId; queueId = queueId + 1
+    queueCount++
+    console.log(queueCount,' tasks waiting in queue')
+    queue.push(id)
+    let randToWhile = Math.floor(Math.random() * (10000 - 2000) + 2000)
+    while (true) {
+        await sleep(randToWhile)
+        if(queue[0] == id && open_browser < browser_limit){
+            console.log('allowed to open browser')
+            open_browser++    //every time it get permission to open it adds to this var
+            queueCount-- 
+            queue = queue.slice(1)
+            return 'page_op'
+        }
+    }
 }
 
 async function getSecuredPage(browser) {        //it will return page that passed
@@ -215,7 +227,6 @@ async function getSecuredPage(browser) {        //it will return page that passe
         console.log('Checking secure...')
         await sleep(500) 
     }
-    console.log('Page passed cloudflare test')
     return page
 }
 
@@ -225,19 +236,8 @@ async function getBrowser() {                     //returns browser to use
         executablePath: './chromium/chrome.exe',
         args: ['--lang=pl-PL,pl']
     })
-    console.log('Got new browser')
+    console.log('new task started')
     return browser
-}
-
-async function checkBrowsers() {          //check if new browser can be opened
-    queue++
-    console.log(queue,' browsers in queue')
-    while (open_browser > browser_limit) {
-        await sleep(621)
-    }
-    queue--
-    open_browser++
-    return true
 }
 
 function check_title(page) {
