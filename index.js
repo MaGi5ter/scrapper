@@ -2,14 +2,17 @@ const puppeteer = require('puppeteer-extra')
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 puppeteer.use(StealthPlugin())
 
+const process = require('node:process')
 const fs = require('fs')
+const path = require('path')
+
 let generateString
 
 const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36 OPR/91.0.4516.106"
 const hosting = ['Mega','Gdrive','Cda','Vk','Sibnet']
 const required_res = 720
 
-let browser_limit = 8    //how many tasks can be done at once, on weakest PC should be maximum 5
+let browser_limit = 11   //how many tasks can be done at once, max 12
 let open_browser = 0
 
 const myArgs = process.argv.slice(2);
@@ -17,14 +20,60 @@ const myArgs = process.argv.slice(2);
 let queueCount = 0
 let queue = []
 let queueId = 0
-const acceptedPlayers = []
+const acceptedPlayers = [] //future plan
 
-////////////////////////////////////////////////////////////////////////////////////
+process.on('beforeExit', (code) => {
+
+    try {
+        fs.writeFileSync('test.txt', generateString);
+    } catch (err) {
+        console.error(err);
+    }
+
+    console.clear()
+    console.log('output zapisany tutaj :',path.resolve('test.txt'));
+});
+
+
+//////////////////////////////////////////////////////////
+//converting data to one line string that is output //////
+//////////////////////////////////////////////////////////
+
+async function namesToString (arr) {
+
+    //each arr need to be separated by <-$#->
+    //in arr variables need to be separated by <-&%->
+    //in in arr variables need to be separated by <-&#->
+
+    let stringarr = ''  //this is output
+
+    for (let index = 0; index < arr.length; index++) {
+        stringarr = stringarr + `${arr[index][0]}<-&#->${arr[index][1]}<-&#->${arr[index][2]}<-&%->`
+    }
+    stringarr = stringarr + '<-$#->'
+    generateString = stringarr
+
+    console.log(stringarr)
+
+    return
+}
+
+async function playerToString(data) {
+
+    //each arr need to be separated by <-$#->
+    generateString = generateString + data + '<-$#->'
+    return
+}
+
+/////////////////////////////////////////////////
+//getting links to players and episodes id //////
+/////////////////////////////////////////////////
 
 getPlayersData(myArgs[0])
 
 async function getPlayersData(link) {
     let episodeIDs = await getEachEpisodeID(link)
+    namesToString(episodeIDs)
 
     for (let index = 0; index < episodeIDs.length; index++) {
         let link = getLinkFromID(episodeIDs[index])
@@ -70,7 +119,7 @@ async function final(playerdata) {
     let finalPlayerdata = await getData(player,auth,pageBrowser[1])
     closeBrowser(pageBrowser[0])
 
-    console.log(finalPlayerdata)
+    playerToString(finalPlayerdata)
 }
 
 async function getPlayerData(link) {
@@ -150,22 +199,16 @@ async function getEachEpisodeID(link) {               //return id to every singl
 async function getData(video,newAuth,page) {      //this will return link to player , hidden behind api
 
     console.log('get data started')
-    let player_data = []
 
     await page.goto(`https://api4.shinden.pl/xhr/${video}/player_load?auth=${newAuth}`,{ waitUntil: 'networkidle0' })
     let data = await page.evaluate(() => document.querySelector('body').innerHTML) //how many second to get link to player
-    //onsole.log(data)
     await sleep(data*1000)
 
     await page.goto(`https://api4.shinden.pl/xhr/${video}/player_show?auth=${newAuth}&width=765&height=-1`,{ waitUntil: 'networkidle0' })
 
     try {
-        const video_link = await page.evaluate(() => document.querySelector('body iframe').src)
-        player_data.push(video_link)
-
         const input_value = await page.evaluate(() => document.querySelector('body input').value)
-        player_data.push(JSON.parse(input_value))
-        return player_data
+        return input_value
     } catch (err) {
         if(err) {
             return "player not found"
@@ -202,7 +245,7 @@ async function checkBrowsers() {   //check if new browser can be opened, basicll
     queueCount++
     console.log(queueCount,' tasks waiting in queue')
     queue.push(id)
-    let randToWhile = Math.floor(Math.random() * (10000 - 2000) + 2000)
+    let randToWhile = Math.floor(Math.random() * (8000 - 2000) + 2000)
     while (true) {
         await sleep(randToWhile)
         if(queue[0] == id && open_browser < browser_limit){
