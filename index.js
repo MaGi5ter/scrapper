@@ -10,7 +10,7 @@ let generateString
 
 const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36 OPR/91.0.4516.106"
 const hosting = ['Mega','Gdrive','Cda','Vk','Sibnet']
-const required_res = 720
+const required_res = 1080
 
 let browser_limit = 11   //how many tasks can be done at once, max 12
 let open_browser = 0
@@ -84,13 +84,17 @@ async function getPlayersData(link) {
 
 async function dataToPlayers (link) {
     let playerdata = await getPlayerData(link)
-    if(playerdata[0][2].includes('assets'))
-    {
-        dataToPlayers(link)
-        console.log('BAD DATA ', link)
+    try {
+        if(playerdata[0][2].includes('assets'))
+        {
+            dataToPlayers(link)
+            console.log('BAD DATA ', link)
+            return
+        }
+        filter_players(playerdata)   
+    } catch (error) {
         return
     }
-    filter_players(playerdata)
 }
 
 async function filter_players(player_data) {
@@ -99,7 +103,7 @@ async function filter_players(player_data) {
 
         let equation = player_data[index][1].replace('p','')
 
-        if(equation > required_res && hosting.includes(player_data[index][0])) {
+        if(equation >= required_res && hosting.includes(player_data[index][0])) {
             final(player_data[index])
         }
         else console.log('removed ',player_data[index])
