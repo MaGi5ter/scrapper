@@ -4,7 +4,7 @@ puppeteer.use(StealthPlugin())
 
 const process = require('node:process')
 const fs = require('fs')
-const path = require('path')
+const path = require('path');
 
 let generateString
 
@@ -12,7 +12,7 @@ const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 
 const hosting = ['Mega','Gdrive','Cda','Vk','Sibnet']
 const required_res = 1080
 
-let browser_limit = 11   //how many tasks can be done at once, max 12
+let browser_limit = 11  //how many tasks can be done at once, max 12
 let open_browser = 0
 
 const myArgs = process.argv.slice(2);
@@ -20,20 +20,26 @@ const myArgs = process.argv.slice(2);
 let queueCount = 0
 let queue = []
 let queueId = 0
-const acceptedPlayers = [] //future plan
+let acceptedPlayers = [] 
 
 process.on('beforeExit', (code) => {
 
-    try {
-        fs.writeFileSync('test.txt', generateString);
-    } catch (err) {
-        console.error(err);
+    if(acceptedPlayers.length>0) {
+        console.log(acceptedPlayers)
+        final()
     }
-
-    console.clear()
-    console.log('output zapisany tutaj :',path.resolve('test.txt'));
+    else
+    {
+        try {
+            fs.writeFileSync('test.txt', generateString);
+        } catch (err) {
+            console.error(err);
+        }
+    
+        console.clear()
+        console.log('output zapisany tutaj :',path.resolve('test.txt'));
+    }
 });
-
 
 //////////////////////////////////////////////////////////
 //converting data to one line string that is output //////
@@ -71,62 +77,67 @@ async function playerToString(data) {
 
 getPlayersData(myArgs[0])
 
-async function getPlayersData(link) {
+async function getPlayersData(link) {            //this gets data from eachepisode function, then run data to players for every eipsode simultaneously 
     let episodeIDs = await getEachEpisodeID(link)
     namesToString(episodeIDs)
 
     for (let index = 0; index < episodeIDs.length; index++) {
         let link = getLinkFromID(episodeIDs[index])
         dataToPlayers(link)
-        sleep(35) //it was way too fast
+        sleep(15) //it was way too fast
     }
 }
 
-async function dataToPlayers (link) {
-    let playerdata = await getPlayerData(link)
+async function dataToPlayers (link) {            //this function gets data from that one above, 
+    let playerdata = await getPlayerData(link)      // go to episode link and get data
+
     try {
         if(playerdata[0][2].includes('assets'))
         {
             dataToPlayers(link)
-            console.log('BAD DATA ', link)
+            console.log('BAD DATA ', link)          //if any errors occur it will try again, this error occured few times when too much sites was loaded at once
             return
         }
-        filter_players(playerdata)   
+        filter_players(playerdata)   //then sends data about episodes and send it to filter players
+
+        // let pageBrowser = await getPage()
+        // let finalPlayerdata = await getData(correct,pageBrowser[1])
+        // closeBrowser(pageBrowser[0])
+
     } catch (error) {
         return
     }
 }
 
-async function filter_players(player_data) {
+async function final() {
+    let max = browser_limit
+    let ids = acceptedPlayers
 
-    for (let index = 0; index < player_data.length; index++) {
+    for (let index = max; index > 0; index--) {
+        //runs once for every browser
+        let howmany = Math.floor(acceptedPlayers.length/index)
+        let data = [] //this wil be sent to function that gets players data
 
-        let equation = player_data[index][1].replace('p','')
+        console.log('task will use: ',howmany)
 
-        if(equation >= required_res && hosting.includes(player_data[index][0])) {
-            final(player_data[index])
+        for (let index = 0; index <= howmany; index++) {
+
+            data.push(ids[index])
+            acceptedPlayers = acceptedPlayers.slice(1)
         }
-        else console.log('removed ',player_data[index])
+        run()
+        async function run() {
+            console.log(data)
 
-        sleep(500)
+            let pageBrowser = await getPage()
+            await getData(data,pageBrowser[1])
+            await closeBrowser(pageBrowser[0])
+        }
     }
+
 }
 
-async function final(playerdata) {
-
-    console.log(playerdata)
-
-    let pageBrowser = await getPage()
-    let auth = await getAuth(pageBrowser[1])
-    let player = playerdata[2]
-
-    let finalPlayerdata = await getData(player,auth,pageBrowser[1])
-    closeBrowser(pageBrowser[0])
-
-    playerToString(finalPlayerdata)
-}
-
-async function getPlayerData(link) {
+async function getPlayerData(link) { //you puts link to specific episode on shinden.pl and will return id's to videos
     let pageBrowser = await getPage() ; let page = pageBrowser[1]
     await page.goto(link,{waitUntil: 'networkidle0'})
 
@@ -162,7 +173,7 @@ function getLinkFromID(idArr) {
     return link
 }
 
-async function getEachEpisodeID(link) {               //return id to every single episode of link that put 
+async function getEachEpisodeID(link) {               //you puts link to shinden.pl/randomamime/episodes on shinden.pl and will return id's to episodes
     let pageBrowser = await getPage() ; let page = pageBrowser[1]
 
     await page.goto(link,{waitUntil: 'networkidle0'})
@@ -200,24 +211,36 @@ async function getEachEpisodeID(link) {               //return id to every singl
     
 }
 
-async function getData(video,newAuth,page) {      //this will return link to player , hidden behind api
+async function getData(video,page) {      //this will return link to player , hidden behind api 
+    console.log('get data started')               // video neeed to be an array
 
-    console.log('get data started')
+    const newAuth = await getAuth(page)
 
-    await page.goto(`https://api4.shinden.pl/xhr/${video}/player_load?auth=${newAuth}`,{ waitUntil: 'networkidle0' })
-    let data = await page.evaluate(() => document.querySelector('body').innerHTML) //how many second to get link to player
-    await sleep(data*1000)
+    let output = []
 
-    await page.goto(`https://api4.shinden.pl/xhr/${video}/player_show?auth=${newAuth}&width=765&height=-1`,{ waitUntil: 'networkidle0' })
+    for (let i = 0; i < video.length; i++) {
+        await page.goto(`https://api4.shinden.pl/xhr/${video[i]}/player_load?auth=${newAuth}`,{ waitUntil: 'networkidle0' })
+        let data = await page.evaluate(() => document.querySelector('body').innerHTML) //how many second to get link to player
+        await sleep(data*1000)
 
-    try {
-        const input_value = await page.evaluate(() => document.querySelector('body input').value)
-        return input_value
-    } catch (err) {
-        if(err) {
-            return "player not found"
-        }
-    }  
+        await page.goto(`https://api4.shinden.pl/xhr/${video[i]}/player_show?auth=${newAuth}&width=765&height=-1`,{ waitUntil: 'networkidle0' })
+
+        try {
+            const input_value = await page.evaluate(() => document.querySelector('body input').value)
+            output.push(input_value)
+            playerToString(input_value)                               //also it puts every player data to finaloutput function
+        } catch (err) {
+
+            console.log(err)
+
+            if(err) {
+                console.log("invalid player: ",video[i])
+            }
+        }     
+        
+    }
+
+    return output
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -231,7 +254,7 @@ async function getAuth(page) {                     //return auth code
 }
 
 async function getPage() {                     //returns new browser and page, also add to queue
-    await checkBrowsers()          /// here problem
+    await checkBrowsers()
     let browser = await getBrowser()
     let page = await getSecuredPage(browser)
     return [browser,page]
@@ -249,7 +272,7 @@ async function checkBrowsers() {   //check if new browser can be opened, basicll
     queueCount++
     console.log(queueCount,' tasks waiting in queue')
     queue.push(id)
-    let randToWhile = Math.floor(Math.random() * (8000 - 2000) + 2000)
+    let randToWhile = Math.floor(Math.random() * (5000 - 1000) + 1000)
     while (true) {
         await sleep(randToWhile)
         if(queue[0] == id && open_browser < browser_limit){
@@ -285,6 +308,23 @@ async function getBrowser() {                     //returns browser to use
     })
     console.log('new task started')
     return browser
+}
+
+async function filter_players(player_data) {    //this function removes players that not pass specified properties , resolution player etc
+    //                                          //then send data to acceptePlayers
+
+    console.log(player_data)
+
+    for (let index = 0; index < player_data.length; index++) {
+
+        let equation = player_data[index][1].replace('p','')
+
+        if(equation >= required_res && hosting.includes(player_data[index][0])) {
+            console.log('accepted: ',player_data[index][2])
+            acceptedPlayers.push(player_data[index][2])
+        }
+        else console.log('removed ',player_data[index])
+    }
 }
 
 function check_title(page) {
