@@ -5,6 +5,114 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
   <script src="script.js"></script>
+   <style>
+    body {
+      background: #2a2a2a;
+      color: #e2e2e2;
+    }
+
+    .accordion {
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+      padding: 0;
+      font-size: 15px;
+      transition: 0.4s;
+      background: #2a2a2a;
+      border: none;
+      color: #e2e2e2;
+    }
+    
+    .active, .accordion:hover {
+      background-color: #333;
+    }
+    
+    .panel {
+      padding: 0 18px;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.2s ease-out;
+    }
+
+    #container {
+        width: 800px;
+        margin-left: auto;
+      margin-right: auto;
+    }
+
+    .odcinek {
+      height: 40px;
+      border: 2px solid rgb(245, 237, 237);
+    }
+
+    .numer_odcinka {
+      width: 120px;
+      padding: 10px;
+      float: left;
+    }
+    .tytul {
+      width: 490px;
+      padding: 10px;
+      border-left: 2px solid rgb(245, 237, 237);
+      color: #14bfa1;
+      float: left;
+    }
+    .id {
+      width: 120px;
+      padding: 10px;
+      border-left: 2px solid rgb(245, 237, 237);
+      float: left;
+    }
+
+    .player {
+      width: 720px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: center;
+      border: 2px solid rgb(207, 205, 205);
+      max-height: 100px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .player_name {
+      min-width: 50px;
+      min-height: 40px;
+      /* float: left; */
+    }
+
+    .author {
+      width: 380px;
+      color: #14bfa1;
+      border-left: 2px solid rgb(245, 237, 237);
+      /* float: left; */
+      min-height: 40px;
+      box-sizing: border-box;
+    }
+
+    .resolution,.audio,.subtitle,.link {
+      width: 70px;
+      border-left: 2px solid rgb(245, 237, 237);
+      /* float: left; */
+      min-height:100%;
+    }
+
+    a:link , a:visited {
+      color: #14bfa1;
+    }
+
+    p {
+      margin-top: 10px;
+      margin-bottom: 10px;
+      margin-left: 5px;
+      margin-right: 5px;
+    }
+
+    .authorp{
+      overflow-wrap: break-word;
+    }
+    </style>
+
 </head>
 <body>
    Here wklej wygenerowany tekst <input type="text" name="firstone" id="heretext">
@@ -12,114 +120,85 @@
 
   <br><br><br><br><br><br>
 
-  <div class="lista" onclick="show(12)">
-    <div class="odcinek">
-      <div class="numer_odcinka">
-        12
-      </div>
-      <div class="tytul">
-        jakis randomowy tytul
-      </div>
-      <div class="id">
-        56123
-      </div>
+    <div id="container"> 
+        <button class="accordion">
+            <div class="odcinek">
+                <div class="numer_odcinka">
+                  12
+                </div>
+                <div class="tytul">
+                  jakis randomowy tytul
+                </div>
+                <div class="id">
+                  56123
+                </div>
+              </div>
+          </button>
+          <div class="panel">
+            <div class="players">
+              <br>
+                <div class="player">
+                    <div class="player_name">
+                        <p>Cda</p>
+                      </div>
+                      <div class="resolution">
+                        <p>1080p</p>
+                      </div>
+                      <div class="author">
+                        <p class="authorp">mateo6989234bardzo dluga nazwa cpokolwiek na test tu idzie782340</p>
+                      </div>
+                      <div class="link">
+                        <a href="http://"><p>here</p></a>
+                      </div>
+                      <div class="audio">
+                        <p>jp</p>
+                      </div>
+                      <div class="subtitle">
+                        <p>pl</p>
+                      </div>
+                </div>
+                <br>
+                <div class="player">
+                    <div class="player_name">
+                        Cda
+                      </div>
+                      <div class="resolution">
+                        <p>1080p</p>
+                      </div>
+                      <div class="author">
+                        <p class="authorp">mateo69892347awdawdqawdawdawdaWdawdwadawdawdwadawdawdawdawdawdawdawdawdawdawdawdawdawdawdawdawdawdaw82340</p>
+                      </div>
+                      <div class="link">
+                        <a href="http://">here</a>
+                      </div>
+                      <div class="audio">
+                        jp
+                      </div>
+                      <div class="subtitle">
+                        pl
+                      </div>
+                </div>
+          </div>
     </div>
 
-    <div id="player_12" style="display: none;">
-      <div class="player">
-        <div class="player_name">
-          Cda
-        </div>
-        <div class="resolution">
-          1080p
-        </div>
-        <div class="author">
-          mateo690
-        </div>
-        <div class="link">
-          <a href="http://">href</a>
-        </div>
-        <div class="audio">
-          jp
-        </div>
-        <div class="subtitle">
-          pl
-        </div>
-      </div>
-    </div>
 
-  </div>
 
-  <style>
-
-    .player_name {
-      min-width: 50px;
-      padding: 10px;
+  <script>
+    var acc = document.getElementsByClassName("accordion");
+    var i;
+    
+    for (i = 0; i < acc.length; i++) {
+      acc[i].addEventListener("click", function() {
+        this.classList.toggle("active");
+        var panel = this.nextElementSibling;
+        if (panel.style.maxHeight) {
+          panel.style.maxHeight = null;
+        } else {
+          panel.style.maxHeight = panel.scrollHeight + "px";
+        } 
+      });
     }
-
-    .resolution , .author, .link, .audio, .subtitle {
-      width: 15%;
-      padding: 10px;
-      border-left: 2px solid rgb(245, 237, 237);
-    }
-
-    .author {
-      width: 350px;
-      color: #14bfa1;
-    }
-
-    .resolution,.audio,.subtitle {
-      width: 40px;
-    }
-
-    body {
-      background: #2a2a2a;
-      color: #e2e2e2;
-    }
-
-    .lista:hover {
-      background-color: #333;
-    }
-
-    .odcinek {
-      display: flex;
-    }
-
-    .lista {
-      margin-left: auto;
-      margin-right: auto;
-      width: 800px;
-      border: 2px solid rgb(245, 237, 237);
-      height: 40px;
-      text-align: center;
-      margin-top: 10px;
-    }
-    .numer_odcinka {
-      width: 15%;
-      padding: 10px;
-    }
-    .tytul {
-      width: 70%;
-      padding: 10px;
-      border-left: 2px solid rgb(245, 237, 237);
-      color: #14bfa1;
-    }
-    .id {
-      width: 15%;
-      padding: 10px;
-      border-left: 2px solid rgb(245, 237, 237);
-    }
-
-    .player {
-      display: flex;
-      width: 90%;
-      margin-left: auto;
-      margin-right: auto;
-      margin-top: 10px;
-      border: 2px solid rgb(207, 205, 205);
-    }
-
-  </style>
+    </script>
 
 
 </body>
