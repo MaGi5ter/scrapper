@@ -30,6 +30,7 @@ process.on('beforeExit', (code) => {
     }
     else
     {
+
         try {
             fs.writeFileSync('test.txt', generateString);
         } catch (err) {
@@ -40,6 +41,13 @@ process.on('beforeExit', (code) => {
         console.log('output zapisany tutaj :',path.resolve('test.txt'));
     }
 });
+
+// setInterval(() => { //just checking how many memory it uses
+
+//     const used = process.memoryUsage().heapUsed / 1024 / 1024;
+//     console.log(`The script uses approximately ${Math.round(used * 100) / 100} MB`);
+
+// }, 3000);
 
 //////////////////////////////////////////////////////////
 //converting data to one line string that is output //////
@@ -111,23 +119,22 @@ async function dataToPlayers (link) {            //this function gets data from 
 
 async function final() {
     let max = browser_limit
-    let ids = acceptedPlayers
 
     for (let index = max; index > 0; index--) {
         //runs once for every browser
         let howmany = Math.floor(acceptedPlayers.length/index)
         let data = [] //this wil be sent to function that gets players data
 
-        console.log('task will use: ',howmany)
-
-        for (let index = 0; index <= howmany; index++) {
-
-            data.push(ids[index])
-            acceptedPlayers = acceptedPlayers.slice(1)
+        if(howmany == 0) continue
+        for (let index = 0; index < howmany; index++) {
+            data.push(acceptedPlayers[index])
         }
+
+        acceptedPlayers = acceptedPlayers.slice(howmany)
+
         run()
         async function run() {
-            console.log(data)
+            //console.log(data)
 
             let pageBrowser = await getPage()
             await getData(data,pageBrowser[1])

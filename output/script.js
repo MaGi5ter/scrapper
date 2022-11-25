@@ -38,7 +38,7 @@ function generateView() {
         document.write(`<!DOCTYPE html><html lang="en"><head>
           <meta http-equiv="X-UA-Compatible" content="IE=edge">
           <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Document</title>
-          <script src="script.js"></script></head><body><br><br><br><br><br><br><div id="container">`)
+          </head><body><br><br><br><br><br><br><div id="container">`)
 
         for (let index = 0; index < arr[0].length-1; index++) {
 
@@ -57,19 +57,18 @@ function generateView() {
               </div>
           </button>
           <div class="panel">
-            <div class="players">
-          
-          `)
+            <div class="players">`)
 
             for (let i = 1; i < arr.length-1; i++) {
+
+              //console.log(arr[i].episode.episode_no,' ',arr[0][index][0])
+
                 if(arr[i].episode.episode_no == arr[0][index][0]) {
                     let link = new DOMParser().parseFromString(arr[i].embded,'text/html')
                     link = link.querySelector('iframe').src
 
                     console.log(arr[i])
-
-                    document.write(`<br>
-                    <div class="player">
+                    document.write(`<br><div class="player">
                     <div class="player_name">
                     <p>${arr[i].player_name}</p>
                       </div>
